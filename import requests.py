@@ -26,7 +26,9 @@ Spanish_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PAR
 ASINs = []
 
 def paperback():
+    next_found = True
     paperback_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'Paperback').click()
+    #while(1):
     WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CLASS_NAME, 's-main-slot')))
 
     # Get all result blocks
@@ -41,10 +43,12 @@ def paperback():
                 title = result.find_element(By.TAG_NAME, "h2").text
                 titles.append(title)
     print(titles)
+    results = driver.find_elements(By.XPATH, "//div[@data-component-type='s-search-result']")
     for i in range(len(results)+1):
-        results = driver.find_elements(By.XPATH, "//div[@data-component-type='s-search-result']")
         try:
-            href = results[i].find_element(By.LINK_TEXT, titles[i]).get_attribute("href")
+            link_element = results[i].find_element(By.TAG_NAME, "a")
+            href = link_element.get_attribute("href")
+
             driver.execute_script(f"window.open('{href}', '_blank');")
             driver.switch_to.window(driver.window_handles[-1])
             ASIN = ""
@@ -72,15 +76,28 @@ def paperback():
                 
             driver.close()
             driver.switch_to.window(driver.window_handles[0])
-        except:
-            print("No title found in this result.")
-    next_page_li = driver.find_element(By.CLASS_NAME, "s-pagination-container").find_elements(By.TAG_NAME, "li")
-    print(ASINs)
-    next_page_li[-1].find_element(By.LINK_TEXT,"Next").click()
-    for li in next_page_li :
-        try:
-            li.find_element(By.LINK_TEXT,"Next").click()
-            break
-        except:
+        except Exception as e:
+            print(f"No title found or another error at index {i}: {e}")
+            driver.switch_to.window(driver.window_handles[0])  # Always go back to main tab
             continue
+#    next_page_li = driver.find_element(By.CLASS_NAME, "s-pagination-container").find_elements(By.TAG_NAME, "li")
+#    for li in next_page_li :
+#        try:
+#            link = li.find_element(By.LINK_TEXT,"Next")
+#            #if "disabled" in li.get_attribute("class") or link.get_attribute("aria-disabled") == "true":
+#                #   print("Reached last page.")
+#                #  next_found = False
+#                # break
+#            link.click()
+#            break
+#       except:
+#            continue
+    #if next_found == False:
+        #   break     
 paperback()
+keys = ASINs[0].keys()
+with open('C:/Users/PC/Desktop/hima/matches/matches_details.csv','w', newline='', encoding='utf-8-sig') as output_file:
+    dict_writer = csv.DictWriter(output_file,keys)
+    dict_writer.writeheader()
+    dict_writer.writerows(ASINs)
+    print("file created")
