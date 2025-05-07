@@ -136,7 +136,7 @@ def paperback():
  
 paperback()
 keys = ASINs[0].keys()
-with open('C:/Users/PC/Desktop/hima/asin/asin_details.csv','w', newline='', encoding='utf-8-sig') as output_file:
+with open('C:/Users/PC/Desktop/amazon_books/asin_details.csv','w', newline='', encoding='utf-8-sig') as output_file:
     dict_writer = csv.DictWriter(output_file,keys)
     dict_writer.writeheader()
     dict_writer.writerows(ASINs)
