@@ -23,6 +23,15 @@ driver.find_element(By.ID, 'twotabsearchtextbox').send_keys('books')
 driver.find_element(By.ID, 'nav-search-submit-button').click()
 
 def apply_language_filter(language):
+    try:
+        see_more_language = WebDriverWait(driver, 15).until(
+                EC.element_to_be_clickable((By.XPATH, '//*[@aria-label="See more, Language"]'))
+            )
+        is_expanded = see_more_language.get_attribute("aria-expanded")
+        if is_expanded == "false":
+            see_more_language.click()
+    except:
+        print("languages toggle expended")
     wait = WebDriverWait(driver, 10)
     try:
         filter_element = wait.until(
