@@ -139,3 +139,4 @@ with open('C:/Users/PC/Desktop/amazon_books/books_details.csv','w', newline='', 
     dict_writer.writeheader()
     dict_writer.writerows(ASINs)
     print("file created")
+    
