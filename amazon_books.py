@@ -3,12 +3,14 @@ from amazoncaptcha import AmazonCaptcha
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 import csv
 import time
 options = webdriver.ChromeOptions()
 options.add_experimental_option("detach", True)
 
 website = 'https://www.amazon.com/'
+# website_test = 'https://www.amazon.com/s?i=stripbooks&rh=n%3A283155%2Cp_n_feature_twenty-five_browse-bin%3A3291436011%257C3291437011%257C3291438011%257C3291439011%2Cp_n_feature_browse-bin%3A2656022011&dc&page=75&qid=1746741227&rnid=618072011&xpid=bRR0AU4g3HCjP&ref=sr_pg_3'
 driver = webdriver.Chrome(options=options)
 driver.implicitly_wait(25)
 driver.get(website)
@@ -17,9 +19,7 @@ captcha = AmazonCaptcha.fromlink(captcha_link)
 captcha_value = AmazonCaptcha.solve(captcha)
 input_field = driver.find_element(By.ID, 'captchacharacters').send_keys(captcha_value)
 driver.find_element(By.CLASS_NAME, 'a-button-text').click()
-
 WebDriverWait(driver, 25)
-
 driver.find_element(By.ID, 'twotabsearchtextbox').send_keys('books')
 driver.find_element(By.ID, 'nav-search-submit-button').click()
 
@@ -47,12 +47,23 @@ ASINs = []
 def paperback():
     paperback_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'Paperback').click()
     x=3
-    while x != 0:
+    f = 0
+    while 1:
         prev_count = 0
         # Get all result listitem
-        search_result = WebDriverWait(driver, 15).until(
-        EC.presence_of_element_located((By.XPATH, "//div[@data-component-type='s-search-result']"))
-        )
+        try:
+            search_result = WebDriverWait(driver, 15).until(
+                EC.presence_of_element_located((By.XPATH, "//div[@data-component-type='s-search-result']"))
+            )
+        except TimeoutException:
+            print("Timed out waiting for search results to load.")
+            break
+            
+            # Handle fallback or exit
+        main_message = search_result.find_element(By.XPATH, "//div[@cel_widget_id='MAIN-MESSAGING-0']").find_element(By.TAG_NAME, "h2").text
+        print(main_message)
+        if main_message != "Results":
+            break
         results = search_result.find_elements(By.XPATH, ".//div[@role='listitem']")
         while True:
             # Scroll down
@@ -68,7 +79,8 @@ def paperback():
 
         
         # Then find all list items within it
-        
+        if(len(results) == 0):
+            break
 
         titles = []
         
