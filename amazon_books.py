@@ -46,88 +46,89 @@ ASINs = []
 
 def paperback():
     paperback_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'Paperback').click()
+    x=3
+    while x != 0:
+        prev_count = 0
+        # Get all result listitem
+        search_result = WebDriverWait(driver, 15).until(
+        EC.presence_of_element_located((By.XPATH, "//div[@data-component-type='s-search-result']"))
+        )
+        results = search_result.find_elements(By.XPATH, ".//div[@role='listitem']")
+        while True:
+            # Scroll down
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(2)  # Let content load
 
-    prev_count = 0
-# Get all result listitem
-    search_result = WebDriverWait(driver, 15).until(
-    EC.presence_of_element_located((By.XPATH, "//div[@data-component-type='s-search-result']"))
-    )
-    results = search_result.find_elements(By.XPATH, ".//div[@role='listitem']")
-    while True:
-        # Scroll down
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(4)  # Let content load
-
-        results = driver.find_elements(By.XPATH, ".//div[@role='listitem']")
-        if len(results) == prev_count:
-            break
-        prev_count = len(results)
-    
-    WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CLASS_NAME, 's-main-slot')))
-
-    
-    # Then find all list items within it
-    
-
-    titles = []
-    
-    print(len(results))
-    for result in results:
-                title = result.find_element(By.TAG_NAME, "h2").text
-                titles.append(title)
-    i = 0
-    
-    for result in results:
+            results = driver.find_elements(By.XPATH, ".//div[@role='listitem']")
+            if len(results) == prev_count:
+                break
+            prev_count = len(results)
         
-        try:
-            # part1, part2 = split_text_at_index(titles[i], index)
-            # href = results[i].find_element(By.LINK_TEXT, titles[i]).get_attribute("href")
-            link_element = result.find_element(By.TAG_NAME, "a")
-            href = link_element.get_attribute("href")
+        WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CLASS_NAME, 's-main-slot')))
 
-            driver.execute_script(f"window.open('{href}', '_blank');")
-            driver.switch_to.window(driver.window_handles[-1])
-            ASIN = ""
+        
+        # Then find all list items within it
+        
+
+        titles = []
+        
+        print(len(results))
+        for result in results:
+                    title = result.find_element(By.TAG_NAME, "h2").text
+                    titles.append(title)
+        i = 0
+        
+        for result in results:
+            
             try:
-                ASIN_parent = driver.find_element(By.CLASS_NAME, 'detail-bullets-wrapper').find_elements(By.TAG_NAME, 'li') #.find_element(By.CLASS_NAME, 'a-list-item').find_elements(By.TAG_NAME, 'span')
-                for li in ASIN_parent:
-                    spans = li.find_element(By.CLASS_NAME, 'a-list-item').find_elements(By.TAG_NAME, 'span')
-                    print(f"spans[0].text :....{ spans[0].text}...")
-                    if spans[0].text == "ASIN :" :
-                        ASIN = spans[1].text
-                        ISBN = ""
-                        ASINs.append({"Book Name":titles[i] ,"ASIN" : spans[1].text, "ISBN": ISBN})
-                        break
-                    elif spans[0].text == "ISBN-13 :" :
-                        ISBN = spans[1].text
-                        ASIN = ""
-                        ASINs.append({"Book Name":titles[i] ,"ASIN" : ASIN, "ISBN": ISBN})
-                        break
-            except:
+                # part1, part2 = split_text_at_index(titles[i], index)
+                # href = results[i].find_element(By.LINK_TEXT, titles[i]).get_attribute("href")
+                link_element = result.find_element(By.TAG_NAME, "a")
+                href = link_element.get_attribute("href")
+
+                driver.execute_script(f"window.open('{href}', '_blank');")
+                driver.switch_to.window(driver.window_handles[-1])
+                ASIN = ""
                 try:
-                    ASIN = driver.find_element(By.CLASS_NAME, 'a-keyvalue').find_element(By.ID, 'detailsAsin').find_element(By.TAG_NAME, 'td').find_element(By.TAG_NAME, 'span').text
-                    ISBN = ""
-                    ASINs.append({"Book Name":titles[i] ,"ASIN" : ASIN, "ISBN": ISBN})
+                    ASIN_parent = driver.find_element(By.CLASS_NAME, 'detail-bullets-wrapper').find_elements(By.TAG_NAME, 'li') #.find_element(By.CLASS_NAME, 'a-list-item').find_elements(By.TAG_NAME, 'span')
+                    for li in ASIN_parent:
+                        spans = li.find_element(By.CLASS_NAME, 'a-list-item').find_elements(By.TAG_NAME, 'span')
+                        print(f"spans[0].text :....{ spans[0].text}...")
+                        if spans[0].text == "ASIN :" :
+                            ASIN = spans[1].text
+                            ISBN = ""
+                            ASINs.append({"Book Name":titles[i] ,"ASIN" : spans[1].text, "ISBN": ISBN})
+                            break
+                        elif spans[0].text == "ISBN-13 :" :
+                            ISBN = spans[1].text
+                            ASIN = ""
+                            ASINs.append({"Book Name":titles[i] ,"ASIN" : ASIN, "ISBN": ISBN})
+                            break
                 except:
-                    print(f"..............ASIN not found...........")
-                
-            driver.close()
-            driver.switch_to.window(driver.window_handles[0])
-        except:
-            print("No title found in this result.")
-        i += 1
-    # next_page_li = driver.find_element(By.CLASS_NAME, "s-pagination-container").find_elements(By.TAG_NAME, "li")
-    # print(ASINs)
-    # next_page_li[-1].find_element(By.LINK_TEXT,"Next").click()
-    # for li in next_page_li :
-    #     try:
-    #         li.find_element(By.LINK_TEXT,"Next").click()
-    #         break
-    #     except:
-    #         continue
+                    try:
+                        ASIN = driver.find_element(By.CLASS_NAME, 'a-keyvalue').find_element(By.ID, 'detailsAsin').find_element(By.TAG_NAME, 'td').find_element(By.TAG_NAME, 'span').text
+                        ISBN = ""
+                        ASINs.append({"Book Name":titles[i] ,"ASIN" : ASIN, "ISBN": ISBN})
+                    except:
+                        print(f"..............ASIN not found...........")
+                    
+                driver.close()
+                driver.switch_to.window(driver.window_handles[0])
+            except:
+                print("No title found in this result.")
+            i += 1
+            if result == results[-1]:
+                print(f"doneeee")
+        next_page_li = driver.find_element(By.CLASS_NAME, "s-pagination-container").find_elements(By.CLASS_NAME, "s-list-item-margin-right-adjustment")
+        print(ASINs)
+        next_element = next_page_li[-1].find_element(By.TAG_NAME, "a")
+        href = next_element.get_attribute("href")
+        driver.get(href)
+        x -= 1
 paperback()
+print(ASINs)
 keys = ASINs[0].keys()
-with open('C:/Users/PC/Desktop/hima/matches/matches_details.csv','w', newline='', encoding='utf-8-sig') as output_file:
+with open('C:/Users/PC/Desktop/amazon_books/books_details.csv','w', newline='', encoding='utf-8-sig') as output_file:
     dict_writer = csv.DictWriter(output_file,keys)
     dict_writer.writeheader()
     dict_writer.writerows(ASINs)
