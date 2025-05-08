@@ -10,7 +10,6 @@ options = webdriver.ChromeOptions()
 options.add_experimental_option("detach", True)
 
 website = 'https://www.amazon.com/'
-# website_test = 'https://www.amazon.com/s?i=stripbooks&rh=n%3A283155%2Cp_n_feature_twenty-five_browse-bin%3A3291436011%257C3291437011%257C3291438011%257C3291439011%2Cp_n_feature_browse-bin%3A2656022011&dc&page=75&qid=1746741227&rnid=618072011&xpid=bRR0AU4g3HCjP&ref=sr_pg_3'
 driver = webdriver.Chrome(options=options)
 driver.implicitly_wait(25)
 driver.get(website)
@@ -38,16 +37,10 @@ apply_language_filter('French')
 apply_language_filter('German')
 apply_language_filter('Spanish')
 
-# English_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'English').click()
-# German_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'German').click()
-# French_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'French').click()
-# Spanish_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'Spanish').click()
 ASINs = []
 
 def paperback():
     paperback_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'Paperback').click()
-    x=3
-    f = 0
     while 1:
         prev_count = 0
         # Get all result listitem
@@ -61,7 +54,6 @@ def paperback():
             
             # Handle fallback or exit
         main_message = search_result.find_element(By.XPATH, "//div[@cel_widget_id='MAIN-MESSAGING-0']").find_element(By.TAG_NAME, "h2").text
-        print(main_message)
         if main_message != "Results":
             break
         results = search_result.find_elements(By.XPATH, ".//div[@role='listitem']")
@@ -84,7 +76,6 @@ def paperback():
 
         titles = []
         
-        print(len(results))
         for result in results:
                     title = result.find_element(By.TAG_NAME, "h2").text
                     titles.append(title)
@@ -93,8 +84,6 @@ def paperback():
         for result in results:
             
             try:
-                # part1, part2 = split_text_at_index(titles[i], index)
-                # href = results[i].find_element(By.LINK_TEXT, titles[i]).get_attribute("href")
                 link_element = result.find_element(By.TAG_NAME, "a")
                 href = link_element.get_attribute("href")
 
@@ -105,7 +94,6 @@ def paperback():
                     ASIN_parent = driver.find_element(By.CLASS_NAME, 'detail-bullets-wrapper').find_elements(By.TAG_NAME, 'li') #.find_element(By.CLASS_NAME, 'a-list-item').find_elements(By.TAG_NAME, 'span')
                     for li in ASIN_parent:
                         spans = li.find_element(By.CLASS_NAME, 'a-list-item').find_elements(By.TAG_NAME, 'span')
-                        print(f"spans[0].text :....{ spans[0].text}...")
                         if spans[0].text == "ASIN :" :
                             ASIN = spans[1].text
                             ISBN = ""
@@ -122,21 +110,18 @@ def paperback():
                         ISBN = ""
                         ASINs.append({"Book Name":titles[i] ,"ASIN" : ASIN, "ISBN": ISBN})
                     except:
-                        print(f"..............ASIN not found...........")
+                        print(f"ASIN not found")
                     
                 driver.close()
                 driver.switch_to.window(driver.window_handles[0])
             except:
                 print("No title found in this result.")
             i += 1
-            if result == results[-1]:
-                print(f"doneeee")
         next_page_li = driver.find_element(By.CLASS_NAME, "s-pagination-container").find_elements(By.CLASS_NAME, "s-list-item-margin-right-adjustment")
         print(ASINs)
         next_element = next_page_li[-1].find_element(By.TAG_NAME, "a")
         href = next_element.get_attribute("href")
         driver.get(href)
-        x -= 1
 paperback()
 print(ASINs)
 keys = ASINs[0].keys()
