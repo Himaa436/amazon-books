@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import csv
+import time
 options = webdriver.ChromeOptions()
 options.add_experimental_option("detach", True)
 
@@ -16,35 +17,74 @@ captcha = AmazonCaptcha.fromlink(captcha_link)
 captcha_value = AmazonCaptcha.solve(captcha)
 input_field = driver.find_element(By.ID, 'captchacharacters').send_keys(captcha_value)
 driver.find_element(By.CLASS_NAME, 'a-button-text').click()
+
+WebDriverWait(driver, 25)
+
 driver.find_element(By.ID, 'twotabsearchtextbox').send_keys('books')
 driver.find_element(By.ID, 'nav-search-submit-button').click()
 
-English_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'English').click()
-German_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'German').click()
-French_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'French').click()
-Spanish_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'Spanish').click()
+def apply_language_filter(language):
+    wait = WebDriverWait(driver, 10)
+    try:
+        filter_element = wait.until(
+            EC.element_to_be_clickable((By.PARTIAL_LINK_TEXT, language))
+        )
+        filter_element.click()
+    except:
+        print(f"Filter for {language} not found or not clickable.")
+
+apply_language_filter('English')
+apply_language_filter('French')
+apply_language_filter('German')
+apply_language_filter('Spanish')
+
+# English_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'English').click()
+# German_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'German').click()
+# French_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'French').click()
+# Spanish_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'Spanish').click()
 ASINs = []
 
 def paperback():
     paperback_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'Paperback').click()
+
+    prev_count = 0
+# Get all result listitem
+    search_result = WebDriverWait(driver, 15).until(
+    EC.presence_of_element_located((By.XPATH, "//div[@data-component-type='s-search-result']"))
+    )
+    results = search_result.find_elements(By.XPATH, ".//div[@role='listitem']")
+    while True:
+        # Scroll down
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(4)  # Let content load
+
+        results = driver.find_elements(By.XPATH, ".//div[@role='listitem']")
+        if len(results) == prev_count:
+            break
+        prev_count = len(results)
+    
     WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.CLASS_NAME, 's-main-slot')))
 
-    # Get all result blocks
-    results = driver.find_elements(By.XPATH, "//div[@data-component-type='s-search-result']")
-
-    # Print first 5 titles
-    current_page = driver.current_url
-    titles = []
+    
+    # Then find all list items within it
     
 
+    titles = []
+    
+    print(len(results))
     for result in results:
                 title = result.find_element(By.TAG_NAME, "h2").text
                 titles.append(title)
-    print(titles)
-    for i in range(len(results)+1):
-        results = driver.find_elements(By.XPATH, "//div[@data-component-type='s-search-result']")
+    i = 0
+    
+    for result in results:
+        
         try:
-            href = results[i].find_element(By.LINK_TEXT, titles[i]).get_attribute("href")
+            # part1, part2 = split_text_at_index(titles[i], index)
+            # href = results[i].find_element(By.LINK_TEXT, titles[i]).get_attribute("href")
+            link_element = result.find_element(By.TAG_NAME, "a")
+            href = link_element.get_attribute("href")
+
             driver.execute_script(f"window.open('{href}', '_blank');")
             driver.switch_to.window(driver.window_handles[-1])
             ASIN = ""
@@ -52,6 +92,7 @@ def paperback():
                 ASIN_parent = driver.find_element(By.CLASS_NAME, 'detail-bullets-wrapper').find_elements(By.TAG_NAME, 'li') #.find_element(By.CLASS_NAME, 'a-list-item').find_elements(By.TAG_NAME, 'span')
                 for li in ASIN_parent:
                     spans = li.find_element(By.CLASS_NAME, 'a-list-item').find_elements(By.TAG_NAME, 'span')
+                    print(f"spans[0].text :....{ spans[0].text}...")
                     if spans[0].text == "ASIN :" :
                         ASIN = spans[1].text
                         ISBN = ""
@@ -74,15 +115,16 @@ def paperback():
             driver.switch_to.window(driver.window_handles[0])
         except:
             print("No title found in this result.")
-    next_page_li = driver.find_element(By.CLASS_NAME, "s-pagination-container").find_elements(By.TAG_NAME, "li")
-    print(ASINs)
-    next_page_li[-1].find_element(By.LINK_TEXT,"Next").click()
-    for li in next_page_li :
-        try:
-            li.find_element(By.LINK_TEXT,"Next").click()
-            break
-        except:
-            continue
+        i += 1
+    # next_page_li = driver.find_element(By.CLASS_NAME, "s-pagination-container").find_elements(By.TAG_NAME, "li")
+    # print(ASINs)
+    # next_page_li[-1].find_element(By.LINK_TEXT,"Next").click()
+    # for li in next_page_li :
+    #     try:
+    #         li.find_element(By.LINK_TEXT,"Next").click()
+    #         break
+    #     except:
+    #         continue
 paperback()
 keys = ASINs[0].keys()
 with open('C:/Users/PC/Desktop/hima/matches/matches_details.csv','w', newline='', encoding='utf-8-sig') as output_file:
