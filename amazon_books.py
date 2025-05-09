@@ -8,6 +8,7 @@ import csv
 import time
 import threading
 from tkinter import *
+from selenium.common.exceptions import WebDriverException
 
 root = Tk()
 root.geometry('600x600')
@@ -30,14 +31,27 @@ website = 'https://www.amazon.com/'
 driver = None
 pages = None
 ASINs = []
+f = 0
 stop_scraping = False
 scraping_thread = None
 scraping_state = False
+
+def driver_is_alive(drv):
+    try:
+        return drv is not None and drv.session_id and len(drv.window_handles) > 0
+    except WebDriverException:
+        return False
+
 def start_scraping_thread():
+    global f
     global scraping_thread, stop_scraping, ASINs,scraping_state
-    ASINs = []
-    stop_scraping = False
-    if(scraping_state == False):
+    if(stop_scraping or not driver_is_alive(driver)) and f == 0:
+        
+        ASINs = []
+        stop_scraping = False
+        wait_label.config(text="")
+        page_label.config(text="")
+        f = 0
         scraping_state = True
         scraping_thread = threading.Thread(target=scraping)
         scraping_thread.start()
@@ -46,12 +60,13 @@ def scraping ():
 
     global driver
     global ASINs
-    
+    global f
 
     main_label.config(text="Scraping started")
     driver = webdriver.Chrome(options=options)
     driver.implicitly_wait(25)
     driver.get(website)
+    print(f"...............{len(driver.window_handles)}.............")
     captcha_link = driver.find_element(By.XPATH, "//div[@class = 'a-row a-text-center']//img").get_attribute('src')
     captcha = AmazonCaptcha.fromlink(captcha_link)
     captcha_value = AmazonCaptcha.solve(captcha)
@@ -62,7 +77,10 @@ def scraping ():
     driver.find_element(By.ID, 'nav-search-submit-button').click()
 
     def apply_language_filter(language):
-        if stop_scraping:
+        if (stop_scraping or not driver_is_alive(driver)) and f == 0:
+                wait_label.config(text="Please wait...")
+                page_label.config(text="")
+                f = 1
                 print("🛑 Scraping stopped by user.")
                 driver.quit()
         try:
@@ -82,11 +100,18 @@ def scraping ():
             filter_element.click()
         except:
             print(f"Filter for {language} not found or not clickable.")
+    if (stop_scraping or not driver_is_alive(driver)) and f == 0:
+                    f = 1
+                    wait_label.config(text="Please wait...")
+                    page_label.config(text="")
 
-    apply_language_filter('English')
-    apply_language_filter('French')
-    apply_language_filter('German')
-    apply_language_filter('Spanish')
+                    stop_and_export()
+                    print(f".............{1}🛑 Scraping stopped by user.")
+    if(f == 0):
+        apply_language_filter('English')
+        apply_language_filter('French')
+        apply_language_filter('German')
+        apply_language_filter('Spanish')
 
     
     
@@ -95,12 +120,17 @@ def scraping ():
     def paperback():
         global pages
         global driver
+        f = 0
         pages = 1
         paperback_filter = driver.find_element(By.ID, 's-refinements').find_element(By.PARTIAL_LINK_TEXT, 'Paperback').click()
         while 1:
             global stop_scraping
-            if stop_scraping:
-                print("🛑 Scraping stopped by user.")
+            if (stop_scraping or not driver_is_alive(driver)) and f == 0:
+                f = 1
+                wait_label.config(text="Please wait...")
+                page_label.config(text="")
+                print(f"...........{2}🛑 Scraping stopped by user.")
+                stop_and_export()
                 break
             prev_count = 0
             # Get all result listitem
@@ -141,11 +171,13 @@ def scraping ():
                         title = result.find_element(By.TAG_NAME, "h2").text
                         titles.append(title)
             i = 0
-            f = 0
+            
             for result in results:
-                if stop_scraping:
+                if (stop_scraping or not driver_is_alive(driver)) and f == 0:
                     f = 1
-                    print("🛑 Scraping stopped by user.")
+                    wait_label.config(text="Please wait...")
+                    page_label.config(text="")
+                    print("..........3🛑 Scraping stopped by user.")
                     break
                 try:
                     link_element = result.find_element(By.TAG_NAME, "a")
@@ -182,55 +214,43 @@ def scraping ():
                     print("No title found in this result.")
                 i += 1
             if f == 1:
+                stop_and_export()
                 break
-            next_page_li = driver.find_element(By.CLASS_NAME, "s-pagination-container").find_elements(By.CLASS_NAME, "s-list-item-margin-right-adjustment")
-            print(ASINs)
-            next_element = next_page_li[-1].find_element(By.TAG_NAME, "a")
-            href = next_element.get_attribute("href")
-            driver.get(href)
-            pages += 1
+            else:
+                next_page_li = driver.find_element(By.CLASS_NAME, "s-pagination-container").find_elements(By.CLASS_NAME, "s-list-item-margin-right-adjustment")
+                print(ASINs)
+                next_element = next_page_li[-1].find_element(By.TAG_NAME, "a")
+                href = next_element.get_attribute("href")
+                driver.get(href)
+                pages += 1
+        
     paperback()
     print(ASINs)
-    extract_to_csv()
-
-def extract_to_csv():
     
+    if(f == 0):
+        stop_and_export()
+
+
+wait_label = Label(frame)
+wait_label.pack()
+def stop_and_export():
+    global driver  # make sure this is declared if you're modifying it
+
     keys = ASINs[0].keys()
     with open('C:/Users/PC/Desktop/amazon_books/books_details.csv','w', newline='', encoding='utf-8-sig') as output_file:
         dict_writer = csv.DictWriter(output_file,keys)
         dict_writer.writeheader()
         dict_writer.writerows(ASINs)
         print("file created")
-        driver.quit()
-        wait_label.config(text="")
-        main_label.config(text="Click the start button to start")
-wait_label = Label(frame)
-wait_label.pack()
-def stop_and_export():
-    wait_label.config(text="Please wait...")
-    global scraping_state
-    scraping_state = False
-    global stop_scraping
-    stop_scraping = True
-    page_label.config(text="")
-    if scraping_thread and scraping_thread.is_alive():
-        print("Waiting for thread to stop...")
-        scraping_thread.join(timeout=10)  # optional: timeout
-    if ASINs:
-        extract_to_csv()
-        
-    else:
-        print("No data to export.")
-        driver.quit()
-        wait_label.config(text="")
-        main_label.config(text="Click the start button to start")
+
     try:
-        driver.quit()
+        if driver_is_alive(driver):
+            driver.quit()
+    finally:
+        driver = None  # <-- Important reset
         wait_label.config(text="")
+        page_label.config(text="")
         main_label.config(text="Click the start button to start")
-    except:
-        main_label.config(text="Click the start button to start")
-        pass
 # Create a button
 start_button = Button(frame, text="Start Scraping",padx=50,font=10,command=start_scraping_thread)
 start_button.pack(pady=10)
