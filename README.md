@@ -1,123 +1,107 @@
-# Amazon Book ASIN Scraper
+# Amazon Book Details Scraper
 
-This Python script uses Selenium to automate the process of browsing Amazon.com, searching for books, applying specific language and format filters, and extracting ASIN/ISBN numbers along with book titles. The extracted data is then saved to a CSV file.
+This Python script uses Selenium to automate the process of searching for books on Amazon.com, applying various filters (language, format), navigating through product pages, and extracting details like Book Title, ASIN, and ISBN-13. The collected data is then saved into a CSV file.
 
 ## Features
 
-*   **Automated Captcha Solving**: Utilizes the `amazoncaptcha` library to attempt to solve Amazon's CAPTCHAs.
-*   **Book Search**: Initiates a search for "books" on Amazon.
-*   **Language Filtering**: Applies filters for English, German, French, and Spanish language books.
-*   **Format Filtering**: Applies a filter for "Paperback" format books.
-*   **ASIN/ISBN Extraction**:
-    *   Navigates to individual product pages.
-    *   Employs multiple strategies to find ASIN or ISBN-13 numbers (checking product details table, bullet points, and regex on page source).
-*   **Pagination Handling**: Navigates through multiple pages of search results.
-*   **Data Export**: Saves the scraped book titles and their corresponding ASINs/ISBNs to a CSV file.
-*   **Robustness**: Includes error handling for page loading timeouts and issues processing individual books.
+*   **Automated Browsing**: Navigates Amazon.com.
+*   **CAPTCHA Handling**: Attempts to solve Amazon's image CAPTCHA using the `amazoncaptcha` library.
+*   **Search Functionality**: Searches for a predefined term (currently "books").
+*   **Filter Application**:
+    *   Applies language filters (English, French, German, Spanish).
+    *   Applies format filter (Paperback).
+*   **Data Extraction**:
+    *   Extracts book titles from search result pages.
+    *   Opens each book's product page in a new tab.
+    *   Scrapes ASIN and/or ISBN-13 from the product details section.
+*   **Pagination**: Navigates through multiple pages of search results.
+*   **Infinite Scroll Handling**: Attempts to load all items on a search results page by scrolling down.
+*   **CSV Export**: Saves the scraped data (Book Name, ASIN, ISBN) into a `books_details.csv` file.
 
 ## Prerequisites
 
 *   Python 3.x
 *   Google Chrome browser installed.
 *   ChromeDriver:
-    *   Must match your installed Google Chrome version.
-    *   Download from [https://chromedriver.chromium.org/downloads](https://chromedriver.chromium.org/downloads)
-    *   Ensure ChromeDriver is in your system's PATH, or specify its path when initializing the `webdriver.Chrome()`. (Alternatively, you can use `webdriver-manager` to handle this automatically - see "Potential Improvements").
+    *   Ensure you have ChromeDriver installed and that its version matches your Google Chrome browser version.
+    *   You can check your Chrome version by typing `chrome://version` in the Chrome address bar.
+    *   Download ChromeDriver from [https://chromedriver.chromium.org/downloads](https://chromedriver.chromium.org/downloads).
+    *   Make sure ChromeDriver is in your system's PATH, or place the `chromedriver.exe` (or `chromedriver` for Linux/macOS) in the same directory as the script.
 
-## Installation
+## Setup
 
 1.  **Clone the repository (or download the script):**
     ```bash
-    git clone <https://github.com/Himaa436/amazon-books>
+    git clone <https://github.com/Himaa436/amazon-books/>
     cd <Himaa436/amazon-books>
     ```
+    Or simply save the Python script to a local directory.
 
 2.  **Install required Python libraries:**
+    Create a `requirements.txt` file with the following content:
+    ```
+    selenium
+    amazoncaptcha
+    ```
+    Then install them using pip:
+    ```bash
+    pip install -r requirements.txt
+    ```
+    Or install them individually:
     ```bash
     pip install selenium amazoncaptcha
     ```
-    *(Consider adding `webdriver-manager` if you want to automate ChromeDriver setup: `pip install webdriver-manager`)*
 
-3.  **Setup ChromeDriver:**
-    *   Download the correct ChromeDriver version for your Chrome browser.
-    *   Place it in a directory included in your system's PATH (e.g., `/usr/local/bin` on Linux/macOS) or in the same directory as the script.
-    *   Alternatively, you can modify the script to explicitly point to the ChromeDriver executable:
-        ```python
-        # from selenium import webdriver
-        # service = webdriver.chrome.service.Service('/path/to/your/chromedriver')
-        # driver = webdriver.Chrome(service=service, options=options)
-        ```
-        Or, if using `webdriver-manager`:
-        ```python
-        # from selenium import webdriver
-        # from webdriver_manager.chrome import ChromeDriverManager
-        # from selenium.webdriver.chrome.service import Service as ChromeService
+## Configuration
 
-        # options = webdriver.ChromeOptions()
-        # options.add_experimental_option("detach", True)
-        # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-        ```
+Before running the script, you might want to adjust:
+
+1.  **Search Term**:
+    Currently, the script searches for "books". You can change this line:
+    ```python
+    driver.find_element(By.ID, 'twotabsearchtextbox').send_keys('books')
+    ```
+    to search for a different term.
+
+2.  **Output File Path**:
+    The script saves the CSV file to a hardcoded path:
+    ```python
+    with open('C:/Users/PC/Desktop/amazon_books/books_details.csv', 'w', newline='', encoding='utf-8-sig') as output_file:
+    ```
+    **Important:** Change `'C:/Users/PC/Desktop/amazon_books/books_details.csv'` to your desired path and filename. Make sure the directory exists, or the script might fail.
+
+3.  **Language Filters**:
+    The `apply_language_filter` function is called for specific languages. You can modify these calls:
+    ```python
+    apply_language_filter('English')
+    apply_language_filter('French')
+    apply_language_filter('German')
+    apply_language_filter('Spanish')
+    ```
+    Note that applying multiple language filters like this will usually result in products that are tagged with *all* these languages, which might yield very few or no results. You might want to apply only one, or modify the logic to select one from a list.
 
 ## Usage
 
-1.  **Modify Output Path (Optional):**
-    By default, the script saves the CSV file to `C:/Users/PC/Desktop/amazon_books/asin_details.csv`. You might want to change this path in the script:
-    ```python
-    # Near the end of the script
-    with open('your/desired/path/asin_details.csv', 'w', newline='', encoding='utf-8-sig') as output_file:
-        # ...
-    ```
-
-2.  **Run the script:**
+1.  Ensure ChromeDriver is accessible (in PATH or same directory).
+2.  Modify the configuration parameters in the script as needed (especially the output file path).
+3.  Run the script from your terminal:
     ```bash
-    python amazon_books.py
+    amazon_books.py
     ```
+    (Replace `amazon_books.py` with the actual name of your Python file).
 
-3.  The script will:
-    *   Open Amazon.com.
-    *   Attempt to solve any CAPTCHA presented.
-    *   Search for "books".
-    *   Apply language and paperback filters.
-    *   Iterate through search results, opening each book in a new tab to extract its ASIN/ISBN.
-    *   Navigate to subsequent pages of search results.
-    *   Once completed or if no more pages are found, it will create an `asin_details.csv` file with the columns: "Book Name", "ASIN", "ISBN".
-
-## Configuration Points in the Code
-
-*   **`website`**: The Amazon domain to target (default: `https://www.amazon.com/`).
-*   **Search Term**: Hardcoded as `'books'` in `driver.find_element(By.ID, 'twotabsearchtextbox').send_keys('books')`.
-*   **Language Filters**: Hardcoded partial link texts: 'English', 'German', 'French', 'Spanish'.
-*   **Format Filter**: Hardcoded partial link text: 'Paperback'.
-*   **Output File Path**: Hardcoded as `C:/Users/PC/Desktop/amazon_books/asin_details.csv`.
-*   **`options.add_experimental_option("detach", True)`**: This keeps the Chrome browser window open after the script finishes, which can be useful for debugging. You can remove or comment it out if you want the browser to close automatically.
-
-## Output
-
-The script generates a CSV file (e.g., `asin_details.csv`) with the following columns:
-*   `Book Name`: The title of the book.
-*   `ASIN`: The ASIN or ISBN-13 of the book. If an ISBN-13 is found, it's placed here.
-*   `ISBN`: This column is currently always an empty string as the `extract_asin_from_page` function returns a single value which is assigned to the "ASIN" key in the dictionary.
+The script will open a Chrome browser window, navigate to Amazon, attempt to solve any CAPTCHA, perform the search, apply filters, and then start scraping. You will see progress printed to the console, and a `books_details.csv` file will be created at the specified location upon completion.
 
 ## Important Notes & Limitations
 
-*   **CAPTCHAs**: Amazon's CAPTCHA mechanisms can change, potentially breaking the `amazoncaptcha` library's effectiveness.
-*   **Website Structure**: This script relies on specific HTML element IDs, classes, and structures. Amazon frequently updates its website, which can break the selectors and require script updates.
-*   **Rate Limiting/IP Blocking**: Extensive or rapid scraping can lead to Amazon temporarily or permanently blocking your IP address. Use responsibly.
-*   **Resource Intensive**: Opening many tabs can be resource-intensive on your system.
-*   **Error Handling**: While some error handling is present, complex scenarios or unexpected page structures might still cause issues.
-*   **ISBN Field**: The current implementation populates the "ASIN" field with either the ASIN or ISBN-13 if found, leaving the dedicated "ISBN" field in the CSV empty. This could be refined if separate storage is strictly needed.
+*   **CAPTCHA Reliability**: The `amazoncaptcha` library's success rate can vary. Amazon frequently updates its CAPTCHA mechanisms, which might break the solver.
+*   **Website Structure Changes**: Web scraping scripts are sensitive to changes in the target website's HTML structure. If Amazon changes its layout, the XPaths and element selectors in this script might break and require updates.
+*   **Rate Limiting/IP Bans**: Amazon employs measures to prevent aggressive scraping. Running the script too frequently or for too long might lead to temporary IP blocks or more persistent CAPTCHA challenges. Use responsibly and consider adding more significant delays (`time.sleep()`) if you encounter issues.
+*   **Error Handling**: The script includes some `try-except` blocks, but it might not cover all possible edge cases or errors.
+*   **"See More" for Languages**: The script tries to click "See more" for language filters. If this element's structure changes or if it's already expanded, it might not behave as expected.
+*   **Dynamic Content Loading**: The script uses scrolling and `WebDriverWait` to handle dynamically loaded content, but complex loading scenarios might still pose challenges.
+*   **Ethical Considerations**: Always respect Amazon's Terms of Service and `robots.txt` file. This script is provided for educational purposes.
 
-## Potential Improvements
+## Contributing
 
-*   Make search terms, filters, and output paths configurable via command-line arguments or a configuration file.
-*   Implement IP rotation using proxies to reduce the risk of blocking.
-*   Add random delays between requests to mimic human behavior.
-*   Use `webdriver-manager` for automatic ChromeDriver downloading and management.
-*   Add an option to run in headless mode (browser runs in the background).
-*   More sophisticated logging for debugging and tracking progress.
-*   Refine ASIN/ISBN extraction to clearly distinguish and store both if available.
-*   Allow selection of different book formats or other filter types.
-
-## License
-
-This project is open-source. Please specify a license if you intend to distribute it (e.g., MIT License).
+Feel free to fork this project, make improvements, and submit pull requests. If you find any bugs or have suggestions, please open an issue.
