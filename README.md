@@ -1,107 +1,87 @@
-# Amazon Book Details Scraper
+# Amazon Book Scraper with GUI
 
-This Python script uses Selenium to automate the process of searching for books on Amazon.com, applying various filters (language, format), navigating through product pages, and extracting details like Book Title, ASIN, and ISBN-13. The collected data is then saved into a CSV file.
+This Python script uses Selenium and Tkinter to scrape book details (Title, ASIN, ISBN) from Amazon.com. It automates the process of searching for "books," applying language filters, selecting the "Paperback" format, and navigating through search result pages. The scraped data is then exported to a CSV file.
 
 ## Features
 
-*   **Automated Browsing**: Navigates Amazon.com.
-*   **CAPTCHA Handling**: Attempts to solve Amazon's image CAPTCHA using the `amazoncaptcha` library.
-*   **Search Functionality**: Searches for a predefined term (currently "books").
-*   **Filter Application**:
-    *   Applies language filters (English, French, German, Spanish).
-    *   Applies format filter (Paperback).
-*   **Data Extraction**:
-    *   Extracts book titles from search result pages.
-    *   Opens each book's product page in a new tab.
-    *   Scrapes ASIN and/or ISBN-13 from the product details section.
-*   **Pagination**: Navigates through multiple pages of search results.
-*   **Infinite Scroll Handling**: Attempts to load all items on a search results page by scrolling down.
-*   **CSV Export**: Saves the scraped data (Book Name, ASIN, ISBN) into a `books_details.csv` file.
+*   **Graphical User Interface (GUI):** Built with Tkinter for easy interaction (Start/Stop).
+*   **Automated CAPTCHA Solving:** Utilizes the `amazoncaptcha` library to attempt to solve Amazon's CAPTCHAs.
+*   **Language Filtering:** Applies filters for English, French, German, and Spanish.
+*   **Format Filtering:** Specifically targets "Paperback" books.
+*   **Pagination:** Automatically navigates to the next page of search results.
+*   **Data Extraction:** Scrapes Book Title, ASIN, and ISBN for each relevant product.
+*   **CSV Export:** Saves the collected data into a `books_details.csv` file.
+*   **Responsive GUI:** Uses threading to keep the GUI responsive while scraping.
+*   **Graceful Stop:** Allows the user to stop the scraping process and export the currently collected data.
 
 ## Prerequisites
 
-*   Python 3.x
-*   Google Chrome browser installed.
-*   ChromeDriver:
-    *   Ensure you have ChromeDriver installed and that its version matches your Google Chrome browser version.
-    *   You can check your Chrome version by typing `chrome://version` in the Chrome address bar.
-    *   Download ChromeDriver from [https://chromedriver.chromium.org/downloads](https://chromedriver.chromium.org/downloads).
-    *   Make sure ChromeDriver is in your system's PATH, or place the `chromedriver.exe` (or `chromedriver` for Linux/macOS) in the same directory as the script.
-
-## Setup
-
-1.  **Clone the repository (or download the script):**
-    ```bash
-    git clone <https://github.com/Himaa436/amazon-books/>
-    cd <Himaa436/amazon-books>
-    ```
-    Or simply save the Python script to a local directory.
-
-2.  **Install required Python libraries:**
-    Create a `requirements.txt` file with the following content:
-    ```
-    selenium
-    amazoncaptcha
-    ```
-    Then install them using pip:
-    ```bash
-    pip install -r requirements.txt
-    ```
-    Or install them individually:
+1.  **Python 3.x:** Download from [python.org](https://www.python.org/downloads/)
+2.  **Google Chrome:** The script is configured to use Chrome.
+3.  **ChromeDriver:**
+    *   Download the ChromeDriver version that **matches your installed Google Chrome version** from [here](https://chromedriver.chromium.org/downloads).
+    *   Place `chromedriver.exe` (Windows) or `chromedriver` (Linux/macOS) in your system's PATH, or in the same directory as the Python script.
+4.  **Python Libraries:** Install the required libraries using pip:
     ```bash
     pip install selenium amazoncaptcha
     ```
+    (Tkinter is usually included with standard Python installations.)
 
-## Configuration
+## How to Use
 
-Before running the script, you might want to adjust:
-
-1.  **Search Term**:
-    Currently, the script searches for "books". You can change this line:
-    ```python
-    driver.find_element(By.ID, 'twotabsearchtextbox').send_keys('books')
-    ```
-    to search for a different term.
-
-2.  **Output File Path**:
+1.  **Clone or Download:** Get the script file (`amazon_books.py`).
+2.  **Install Prerequisites:** Ensure Python, Chrome, ChromeDriver, and the necessary Python libraries are installed and configured.
+3.  **Configure CSV Output Path (Optional):**
     The script saves the CSV file to a hardcoded path:
+    `C:/Users/PC/Desktop/amazon_books/books_details.csv`
+    If you want to save it elsewhere, modify this line in the `stop_and_export` function:
     ```python
-    with open('C:/Users/PC/Desktop/amazon_books/books_details.csv', 'w', newline='', encoding='utf-8-sig') as output_file:
+    with open('YOUR_DESIRED_PATH/books_details.csv','w', newline='', encoding='utf-8-sig') as output_file:
     ```
-    **Important:** Change `'C:/Users/PC/Desktop/amazon_books/books_details.csv'` to your desired path and filename. Make sure the directory exists, or the script might fail.
-
-3.  **Language Filters**:
-    The `apply_language_filter` function is called for specific languages. You can modify these calls:
-    ```python
-    apply_language_filter('English')
-    apply_language_filter('French')
-    apply_language_filter('German')
-    apply_language_filter('Spanish')
-    ```
-    Note that applying multiple language filters like this will usually result in products that are tagged with *all* these languages, which might yield very few or no results. You might want to apply only one, or modify the logic to select one from a list.
-
-## Usage
-
-1.  Ensure ChromeDriver is accessible (in PATH or same directory).
-2.  Modify the configuration parameters in the script as needed (especially the output file path).
-3.  Run the script from your terminal:
+4.  **Run the Script:**
+    Open a terminal or command prompt, navigate to the directory where you saved the script, and run:
     ```bash
-    amazon_books.py
+    python amazon_books.py
     ```
-    (Replace `amazon_books.py` with the actual name of your Python file).
+5.  **Interact with the GUI:**
+    *   A window titled "Amazon Books scraping" will appear.
+    *   Click the **"Start Scraping"** button.
+        *   A new Chrome browser window will open and navigate to Amazon.com.
+        *   The script will attempt to solve any initial CAPTCHA.
+        *   It will then search for "books," apply language and format filters, and begin scraping.
+        *   The GUI will update with messages like "Scraping started" and "Extracting data from page X...".
+    *   To stop scraping and save the data:
+        *   Click the **"End scraping and give the csv file"** button.
+        *   The script will stop, close the browser, and save all data collected up to that point into the CSV file. The GUI will reset to its initial state.
 
-The script will open a Chrome browser window, navigate to Amazon, attempt to solve any CAPTCHA, perform the search, apply filters, and then start scraping. You will see progress printed to the console, and a `books_details.csv` file will be created at the specified location upon completion.
+## Output
+
+The script generates a CSV file (default: `books_details.csv`) with the following columns:
+
+*   `Book Name`: The title of the book.
+*   `ASIN`: The Amazon Standard Identification Number.
+*   `ISBN`: The International Standard Book Number (usually ISBN-13).
 
 ## Important Notes & Limitations
 
-*   **CAPTCHA Reliability**: The `amazoncaptcha` library's success rate can vary. Amazon frequently updates its CAPTCHA mechanisms, which might break the solver.
-*   **Website Structure Changes**: Web scraping scripts are sensitive to changes in the target website's HTML structure. If Amazon changes its layout, the XPaths and element selectors in this script might break and require updates.
-*   **Rate Limiting/IP Bans**: Amazon employs measures to prevent aggressive scraping. Running the script too frequently or for too long might lead to temporary IP blocks or more persistent CAPTCHA challenges. Use responsibly and consider adding more significant delays (`time.sleep()`) if you encounter issues.
-*   **Error Handling**: The script includes some `try-except` blocks, but it might not cover all possible edge cases or errors.
-*   **"See More" for Languages**: The script tries to click "See more" for language filters. If this element's structure changes or if it's already expanded, it might not behave as expected.
-*   **Dynamic Content Loading**: The script uses scrolling and `WebDriverWait` to handle dynamically loaded content, but complex loading scenarios might still pose challenges.
-*   **Ethical Considerations**: Always respect Amazon's Terms of Service and `robots.txt` file. This script is provided for educational purposes.
+*   **CAPTCHAs:** Amazon's CAPTCHA system is designed to prevent automated access. While this script uses the `amazoncaptcha` library, frequent scraping or changes by Amazon can lead to CAPTCHAs that the library cannot solve. Manual intervention might be required if the script gets stuck on a CAPTCHA.
+*   **Website Structure Changes:** Web scraping scripts are sensitive to changes in the target website's HTML structure. If Amazon updates its website layout, the Selenium selectors (XPaths, IDs, class names) in this script might break, requiring updates to the code.
+*   **Rate Limiting & IP Blocking:** Amazon may implement rate limiting or IP blocking if it detects excessive automated requests. Use this script responsibly and consider adding delays if you encounter issues.
+*   **Error Handling:** The script includes some error handling, but it might not cover all possible scenarios (e.g., network interruptions, unexpected pop-ups on Amazon).
+*   **Single Threaded Scraping Logic:** While the GUI is responsive due to threading, the core scraping logic runs sequentially.
+*   **Driver Management:** The script re-initializes the WebDriver if "Start Scraping" is clicked after a previous run (or stop). Ensure that previous browser windows controlled by Selenium are closed if you manually stop the Python script execution without using the GUI's stop button.
 
-## Contributing
+## Troubleshooting
 
-Feel free to fork this project, make improvements, and submit pull requests. If you find any bugs or have suggestions, please open an issue.
+*   **`WebDriverException: Message: 'chromedriver' executable needs to be in PATH`**:
+    Ensure `chromedriver.exe` (or `chromedriver`) is either in your system's PATH environment variable or in the same directory as your Python script. Also, verify the ChromeDriver version matches your Chrome browser version.
+*   **CAPTCHA solving fails repeatedly**:
+    The `amazoncaptcha` library might be outdated, or Amazon has significantly changed its CAPTCHA. Check for updates to the library or consider alternative CAPTCHA solving services/methods (which might involve costs).
+*   **Elements not found (`NoSuchElementException`, `TimeoutException`)**:
+    This usually means Amazon has changed its website HTML structure. You will need to inspect the Amazon page and update the XPaths or other selectors (e.g., `By.ID`, `By.CLASS_NAME`) in the script.
+*   **Script stops without error message / GUI hangs:**
+    Check the console output where you ran the script for any Python errors that might not be caught or displayed in the GUI.
+
+## Disclaimer
+
+This script is intended for educational purposes. Be mindful of Amazon's terms of service regarding web scraping. Scraping too aggressively can put a strain on their servers. Always scrape responsibly.
